@@ -40,8 +40,8 @@ parser.add_argument('samples', type=str)
 
 parser.add_argument('--seed', default=123, type=int)
 
-parser.add_argument('--num-warmup', default=100, type=int)
-parser.add_argument('--num-samples', default=5000, type=int)
+parser.add_argument('--num-warmup', default=1000, type=int)
+parser.add_argument('--num-samples', default=10000, type=int)
 
 parser.add_argument('--num-warmup-prior', default=None, type=int)
 parser.add_argument('--num-samples-prior', default=None, type=int)
