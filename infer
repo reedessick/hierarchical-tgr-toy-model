@@ -69,15 +69,16 @@ def prior():
     # draw hyperparameters
     mean0 = numpyro.sample('mean0', dist.Normal(0.0, 1.0))
     stdv0 = numpyro.sample('stdv0', dist.Uniform(0.0, 4.0))
-    p = numpyro.sample('p', dist.Normal(-2.0, 1.0))
+    exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 1.0))
+    exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 1.0))
 
-    return mean0, stdv0, p
+    return mean0, stdv0, exp_mean, exp_stdv
 
 def model():
-    mean0, stdv0, p = prior()
+    mean0, stdv0, exp_mean, exp_stdv = prior()
 
-    mean = mean0 * data['M']**p
-    stdv = stdv0 * data['M']**p
+    mean = mean0 * data['M']**exp_mean
+    stdv = stdv0 * data['M']**exp_stdv
 
     numpyro.sample('dphi', dist.Normal(mean, stdv), obs=data['dphi'])
 
@@ -133,14 +134,15 @@ with h5py.File(args.samples, 'w') as obj:
 if args.verbose:
     print('plotting')
 
-labels = ['mean0', 'stdv0', 'p']
-truth = [meta['mean0'], meta['stdv0'], meta['p']]
+labels = ['mean0', 'stdv0', 'exp_mean', 'exp_stdv']
+truth = [meta['mean0'], meta['stdv0'], meta['exp_mean'], meta['exp_stdv']]
 
 ### prior
 atad = np.transpose([
     prior_samples['mean0'],
     prior_samples['stdv0'],
-    prior_samples['p'],
+    prior_samples['exp_mean'],
+    prior_samples['exp_stdv'],
 ])
 
 fig = corner.corner(
@@ -157,11 +159,12 @@ fig = corner.corner(
 atad = np.transpose([
     posterior_samples['mean0'],
     posterior_samples['stdv0'],
-    posterior_samples['p'],
+    posterior_samples['exp_mean'],
+    posterior_samples['exp_stdv'],
 ])
 
 ranges = []
-for key in ['mean0', 'stdv0', 'p']:
+for key in ['mean0', 'stdv0', 'exp_mean', 'exp_stdv']:
     m = np.min(posterior_samples[key])
     M = np.max(posterior_samples[key])
     d = (M-m)*0.5
@@ -182,6 +185,8 @@ fig = corner.corner(
 fig.text(0.9, 0.90, 'truth', color='k', ha='center')
 fig.text(0.9, 0.85, 'prior', color='b', ha='center')
 fig.text(0.9, 0.80, 'posterior', color='r', ha='center')
+
+fig.suptitle('dphi ~ Normal(mean, stdv)\nmu = mean0 * M**exp_mean\nstdv = stdv0 * M**exp_stdv')
 
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')

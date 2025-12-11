@@ -43,7 +43,8 @@ meta = dict(
     max_q = 1.0,
     mean0 = 1.0,
     stdv0 = 2.0,
-    p = -2.0,
+    exp_mean = -2.0,
+    exp_stdv = -2.0,
 )
 
 #------------------------
@@ -68,15 +69,15 @@ if args.verbose:
     print('drawing %d dphi samples with mode=%s' % (args.num, args.dphi_mode))
 
 if args.dphi_mode == 'scaled_normal':
-    mean = meta['mean0'] * M**meta['p']
-    stdv = meta['stdv0'] * M**meta['p']
+    mean = meta['mean0'] * M**meta['exp_mean']
+    stdv = meta['stdv0'] * M**meta['exp_stdv']
 
     dphi = mean + stdv*np.random.normal(size=args.num) # draw unscaled, centered dphi
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
 elif args.dphi_mode == 'scaled_exp_abs':
-    mean = meta['mean0'] * M**meta['p']
-    stdv = meta['stdv0'] * M**meta['p']
+    mean = meta['mean0'] * M**meta['exp_mean']
+    stdv = meta['stdv0'] * M**meta['exp_stdv']
     gamma = 2**0.5/stdv
 
     # inverse-transform sample
@@ -86,8 +87,8 @@ elif args.dphi_mode == 'scaled_exp_abs':
     logprob_dphi = -gamma*np.abs(dphi-mean) + np.log(0.5) + np.log(gamma)
 
 elif args.dphi_mode == 'scaled_exp':
-    mean = meta['mean0'] * M**meta['p']
-    stdv = meta['stdv0'] * M**meta['p']
+    mean = meta['mean0'] * M**meta['exp_mean']
+    stdv = meta['stdv0'] * M**meta['exp_stdv']
 
     gamma = 1/stdv
     a = mean - 1/gamma
