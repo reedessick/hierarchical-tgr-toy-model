@@ -1,7 +1,7 @@
 Workflow should go something like:
 
 ```
-for MODE in scaled_normal scaled_exp_abs scaled_ex scaled_normal_q
+for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q
 do
     ./generate 1000 catalog_${MODE}.hdf -v
     ./infer catalog_${MODE}.hdf samples_${MODE}.hdf -v
@@ -77,7 +77,7 @@ The model is Gaussian.
 ```
 where
 ```math
-\mu = \mu_0 M^{p_\mu} \left(1 - e^{2q})
+\mu = \mu_0 M^{p_\mu} \left(1 - e^{2q}\right)
 ```
 and
 ```math
