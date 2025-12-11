@@ -109,6 +109,9 @@ This model assumes a deterministic model for `dphi` that should nevertheless be 
 ```
 This will test whether the assumption that `dphi` is random affects our ability to recover the hyperparameters.
 
+While it appears that there is a bias in the recovered value of `stdv0` and `exp_stdv`, the sampler really just seemed to get stuck in a region of parameter space that nevertheless corresponds to essentially zero with for all relevant masses.
+Similarly, if we assume "one scaling", we can introduce a slight bias in the recovery of `exp_mean` if the prior limits `stdv0` to be reasonably large.
+
 |catalog|posterior|posterior(one scaling)|
 |---|---|---|
 |<img src="catalog_deterministic.png">|<img src="samples_deterministic.png">|<img src="samples_deterministic_one_scaling.png">|
