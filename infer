@@ -38,6 +38,8 @@ parser = ArgumentParser()
 parser.add_argument('catalog', type=str)
 parser.add_argument('samples', type=str)
 
+parser.add_argument('--one-scaling', default=False, action='store_true')
+
 parser.add_argument('--seed', default=123, type=int)
 
 parser.add_argument('--num-warmup', default=1000, type=int)
@@ -66,19 +68,21 @@ if args.verbose:
 
 # define model
 
-def prior():
+def prior(one_scaling):
     # draw hyperparameters
     mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
     stdv0 = numpyro.sample('stdv0', dist.Uniform(0.0, 50.0))
 
     exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
-    exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
-#    exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
+    if one_scaling:
+        exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
+    else:
+        exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
 
     return mean0, stdv0, exp_mean, exp_stdv
 
-def model():
-    mean0, stdv0, exp_mean, exp_stdv = prior()
+def model(one_scaling):
+    mean0, stdv0, exp_mean, exp_stdv = prior(one_scaling)
 
     mean = mean0 * data['M']**exp_mean
     stdv = stdv0 * data['M']**exp_stdv
@@ -101,7 +105,7 @@ mcmc = MCMC(
     num_warmup=num_warmup_prior,
     num_samples=num_samples_prior,
 )
-mcmc.run(random.PRNGKey(args.seed))
+mcmc.run(random.PRNGKey(args.seed), args.one_scaling)
 prior_samples = mcmc.get_samples()
 
 #---
@@ -111,7 +115,7 @@ if args.verbose:
         (args.num_samples, args.num_warmup, args.seed))
 
 mcmc = MCMC(NUTS(model), num_warmup=args.num_warmup, num_samples=args.num_samples)
-mcmc.run(random.PRNGKey(args.seed))
+mcmc.run(random.PRNGKey(args.seed), args.one_scaling)
 posterior_samples = mcmc.get_samples()
 
 #------------------------
