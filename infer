@@ -13,6 +13,7 @@ import h5py
 import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
+plt.rcParams['text.usetex'] = True
 
 import corner
 
@@ -67,10 +68,12 @@ if args.verbose:
 
 def prior():
     # draw hyperparameters
-    mean0 = numpyro.sample('mean0', dist.Normal(0.0, 1.0))
-    stdv0 = numpyro.sample('stdv0', dist.Uniform(0.0, 4.0))
-    exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 1.0))
-    exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 1.0))
+    mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
+    stdv0 = numpyro.sample('stdv0', dist.Uniform(0.0, 50.0))
+
+    exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
+    exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
+#    exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
 
     return mean0, stdv0, exp_mean, exp_stdv
 
@@ -134,7 +137,8 @@ with h5py.File(args.samples, 'w') as obj:
 if args.verbose:
     print('plotting')
 
-labels = ['mean0', 'stdv0', 'exp_mean', 'exp_stdv']
+#          mean0       stdv0        exp_mean   exp_stdv
+labels = ['$\mu_0$', '$\sigma_0$', '$p_\mu$', '$p_\sigma$']
 truth = [meta['mean0'], meta['stdv0'], meta['exp_mean'], meta['exp_stdv']]
 
 ### prior
@@ -149,7 +153,7 @@ fig = corner.corner(
     atad,
     color='b',
     truths=truth,
-    truth_color='grey',
+    truth_color='k',
     hist_kwargs=dict(density=True),
     bins=min(100, max(10, int(0.3*len(atad)**0.5))),
 )
@@ -165,9 +169,9 @@ atad = np.transpose([
 
 ranges = []
 for key in ['mean0', 'stdv0', 'exp_mean', 'exp_stdv']:
-    m = np.min(posterior_samples[key])
-    M = np.max(posterior_samples[key])
-    d = (M-m)*0.5
+    m = min(np.min(posterior_samples[key]), meta[key])
+    M = max(np.max(posterior_samples[key]), meta[key])
+    d = (M-m)*0.1
     ranges.append((m-d, M+d))
 
 fig = corner.corner(
@@ -182,11 +186,11 @@ fig = corner.corner(
 
 ### decorate
 
-fig.text(0.9, 0.90, 'truth', color='k', ha='center')
-fig.text(0.9, 0.85, 'prior', color='b', ha='center')
-fig.text(0.9, 0.80, 'posterior', color='r', ha='center')
+fig.text(0.9, 0.900, 'truth', color='k', ha='center')
+fig.text(0.9, 0.875, 'prior', color='b', ha='center')
+fig.text(0.9, 0.850, 'posterior', color='r', ha='center')
 
-fig.suptitle('dphi ~ Normal(mean, stdv)\nmu = mean0 * M**exp_mean\nstdv = stdv0 * M**exp_stdv')
+fig.suptitle('$\delta \phi \sim \mathcal{N}(\mu, \sigma)$\n$\mu = \mu_0  M^{p_\mu}$\n$\sigma = \sigma_0 M^{p_\sigma}$')
 
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')

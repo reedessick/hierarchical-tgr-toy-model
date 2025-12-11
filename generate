@@ -13,6 +13,7 @@ import h5py
 import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
+plt.rcParams['text.usetex'] = True
 
 import corner
 
@@ -72,7 +73,7 @@ if args.dphi_mode == 'scaled_normal':
     mean = meta['mean0'] * M**meta['exp_mean']
     stdv = meta['stdv0'] * M**meta['exp_stdv']
 
-    dphi = mean + stdv*np.random.normal(size=args.num) # draw unscaled, centered dphi
+    dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
 elif args.dphi_mode == 'scaled_exp_abs':
@@ -97,7 +98,11 @@ elif args.dphi_mode == 'scaled_exp':
     logprob_dphi = -gamma*(dphi - a) + np.log(gamma)
 
 elif args.dphi_mode == 'scaled_normal_q':
-    raise NotImplementedError
+    mean = meta['mean0'] * M**meta['exp_mean'] * (1 - np.exp(q/0.5)) # just some strong function of q
+    stdv = meta['stdv0'] * M**meta['exp_stdv'] * np.exp(q/0.5)
+
+    dphi = mean + stdv*np.random.normal(size=args.num)
+    logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
 else:
     raise ValueError('--dphi=%s not understood' % args.dpi)
@@ -127,8 +132,11 @@ if args.verbose:
 
 fig = corner.corner(
     np.transpose([M, q, dphi]),
-    labels=['M', 'q', 'dphi'],
+    labels=['$M$', '$q$', '$\delta\phi$'],
 )
+
+for ax in fig.axes:
+    ax.tick_params(direction='in', which='both')
 
 figname = args.target[:-3] + 'png' # FIXME? could be fragile
 if args.verbose:
