@@ -65,7 +65,7 @@ and
 
 |catalog|posterior|
 |---|---|
-|<img src="catalog_scaled_exp.png">|<img src="samples_scaled_ex.png">|
+|<img src="catalog_scaled_exp.png">|<img src="samples_scaled_exp.png">|
 
 ### `scaled_normal_q`
 
