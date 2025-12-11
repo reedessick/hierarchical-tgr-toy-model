@@ -12,17 +12,47 @@ done
 
 ---
 
-Examples:
+## Examples:
 
+All examples are recovered using the same model:
 ```math
-\delta\phi
+\delta\phi \sim \mathcal{N}(\mu_0 M^{p_\mu}, \sigma_0 M^{p_\sigma})
 ```
 
-catalog_scaled_ex.png
-catalog_scaled_exp_abs.png
-catalog_scaled_normal_q.png
-catalog_scaled_normal.png
+### `scaled_normal`
+
+The catalog is generated with the same model that's used during recovery
+```math
+\delta\phi \sim \mathcal{N}(\mu_0 M^{p_\mu}, \sigma_0 M^{p_\sigma})
+```
+
+|catalog|posterior|
+|---|---|
+|<img src="catalog_scaled_normal.png">|<img src="samples_scaled_normal.png">|
+
+### `scaled_exp_abs`
+
+The catalog is generated with a different model than what's used during recovery.
+This model is symmetric and has the correct scaling of moments with `M`.
+However, it is not Gaussian.
+```math
+\delta\phi \sim \frac{\gamma}{2} \exp\left(-\gamma|\delta\phi - \mu|\right)
+```
+for which
+```math
+\sigma^2 = 2/\gamma^2
+```
+ 
+|catalog|posterior|
+|---|---|
+|<img src="catalog_scaled_exp_abs.png">|<img src="samples_scaled_exp_abs.png">|
+
+### `scaled_exp`
+
+catalog_scaled_exp.png
 samples_scaled_ex.png
-samples_scaled_exp_abs.png
+
+### `scaled_normal_q`
+
+catalog_scaled_normal_q.png
 samples_scaled_normal_q.png
-samples_scaled_normal.png
