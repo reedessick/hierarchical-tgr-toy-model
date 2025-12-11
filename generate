@@ -39,6 +39,7 @@ args = parser.parse_args()
 if args.seed:
     if args.verbose:
         print('setting numpy.random.seed(%d)' % args.seed)
+    np.random.seed(args.seed)
 
 #-------------------------------------------------
 
@@ -145,7 +146,7 @@ fig = corner.corner(
     labels=['$M$', '$q$', '$\delta\phi$'],
 )
 
-fig.suptitle('%d events' % args.num)
+fig.suptitle('dphi_mode=%s\n%d events' % (args.dphi_mode, args.num))
 
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')
