@@ -145,6 +145,8 @@ fig = corner.corner(
     labels=['$M$', '$q$', '$\delta\phi$'],
 )
 
+fig.suptitle('%d events' % args.num)
+
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')
 
