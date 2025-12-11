@@ -33,7 +33,7 @@ The catalog is generated with the same model that's used during recovery
 We expect good recovery, and this is observed.
 
 |catalog|posterior|posterior(one scaling)|
-|---|---|
+|---|---|---|
 |<img src="catalog_scaled_normal.png">|<img src="samples_scaled_normal.png">|<img src="samples_scaled_normal_one_scaling.png">|
 
 ### `scaled_exp_abs`
@@ -51,7 +51,7 @@ for which
 We expect good recovery of the first 2 moments, and this is what's observed.
  
 |catalog|posterior|posterior(one scaling)|
-|---|---|
+|---|---|---|
 |<img src="catalog_scaled_exp_abs.png">|<img src="samples_scaled_exp_abs.png">|<img src="samples_scaled_exp_abs_one_scaling.png">|
 
 ### `scaled_exp`
@@ -73,7 +73,7 @@ We expect good recovery of the first 2 moments, even though the true distributio
 This is what's observed.
 
 |catalog|posterior|posterior(one scaling)|
-|---|---|
+|---|---|---|
 |<img src="catalog_scaled_exp.png">|<img src="samples_scaled_exp.png">|<img src="samples_scaled_exp_one_scaling.png">|
 
 ### `scaled_normal_q`
@@ -96,5 +96,5 @@ Here, we do not expect good recovery of the first 2 moments because they depend 
 As expected, we observe large biases, although the scaling of the moments with `M` is still recovered reasonably well.
 
 |catalog|posterior|posterior(one scaling)|
-|---|---|
+|---|---|---|
 |<img src="catalog_scaled_normal_q.png">|<img src="samples_scaled_normal_q.png">|<img src="samples_scaled_normal_q_one_scaling.png">|
