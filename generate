@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+
+"""generate mock catalogs
+"""
+__author__ = "Reed Essick (reed.essick@gmail.com)"
+
+#-------------------------------------------------
+
+import numpy as np
+
+import h5py
+
+import matplotlib
+matplotlib.use("Agg")
+from matplotlib import pyplot as plt
+
+import corner
+
+from argparse import ArgumentParser
+
+#-------------------------------------------------
+
+parser = ArgumentParser()
+
+parser.add_argument('num', type=int)
+
+parser.add_argument('target', type=str)
+
+parser.add_argument('--dphi-mode', default='scaled_normal', type=str)
+
+parser.add_argument('-v', '--verbose', default=False, action='store_true')
+
+args = parser.parse_args()
+
+#-------------------------------------------------
+
+meta = dict(
+    num=args.num,
+    dphi_mode=args.dphi_mode,
+    min_M = 10,
+    max_M = 100,
+    min_q = 0.1,
+    max_q = 1.0,
+    mean0 = 1.0,
+    stdv0 = 2.0,
+    p = -2.0,
+)
+
+#------------------------
+
+# draw total mass and mass ratio
+if args.verbose:
+    print('drawing %d total mass samples uniformly between %f - %f' % (args.num, meta['min_M'], meta['max_M']))
+M = np.random.random(args.num) * (meta['max_M'] - meta['min_M']) + meta['min_M']
+logprob_M = np.ones(args.num, dtype=float) / (meta['max_M'] - meta['min_M'])
+
+#------------------------
+
+# draw mass ratio samples
+if args.verbose:
+    print('drawing %d mass ratio samples uniformly between %f - %f' % (args.num, meta['min_q'], meta['max_q']))
+q = np.random.random(args.num) * (meta['max_q'] - meta['min_q']) + meta['min_q']
+logprob_q = np.ones(args.num, dtype=float) / (meta['max_q'] - meta['min_q'])
+
+#------------------------
+
+if args.verbose:
+    print('drawing %d dphi samples with mode=%s' % (args.num, args.dphi_mode))
+
+if args.dphi_mode == 'scaled_normal':
+    mean = meta['mean0'] * M**meta['p']
+    stdv = meta['stdv0'] * M**meta['p']
+
+    dphi = mean + stdv*np.random.normal(size=args.num) # draw unscaled, centered dphi
+    logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
+
+elif args.dphi_mode == 'scaled_exp_abs':
+    mean = meta['mean0'] * M**meta['p']
+    stdv = meta['stdv0'] * M**meta['p']
+    gamma = 2**0.5/stdv
+
+    # inverse-transform sample
+    dphi = (-np.log(1 - np.random.random(size=args.num)) / gamma) * np.where(np.random.random(size=args.num)>0.5, +1, -1)
+    dphi += mean
+    
+    logprob_dphi = -gamma*np.abs(dphi-mean) + np.log(0.5) + np.log(gamma)
+
+elif args.dphi_mode == 'scaled_exp':
+    mean = meta['mean0'] * M**meta['p']
+    stdv = meta['stdv0'] * M**meta['p']
+
+    gamma = 1/stdv
+    a = mean - 1/gamma
+
+    dphi = (-np.log(1 - np.random.random(size=args.num)) / gamma) + a
+    logprob_dphi = -gamma*(dphi - a) + np.log(gamma)
+
+elif args.dphi_mode == 'scaled_normal_q':
+    raise NotImplementedError
+
+else:
+    raise ValueError('--dphi=%s not understood' % args.dpi)
+
+#------------------------
+
+if args.verbose:
+    print('writing catalog to: '+args.target)
+
+with h5py.File(args.target, 'w') as obj:
+    for k, v in meta.items():
+        obj.attrs.create(k, v)
+
+    obj.create_dataset('M', data=M)
+    obj.create_dataset('logprob_M', data=logprob_M)
+
+    obj.create_dataset('q', data=q)
+    obj.create_dataset('logprob_q', data=logprob_q)
+
+    obj.create_dataset('dphi', data=dphi)
+    obj.create_dataset('logprob_dphi', data=logprob_dphi)
+
+#------------------------
+
+if args.verbose:
+    print('plotting')
+
+fig = corner.corner(
+    np.transpose([M, q, dphi]),
+    labels=['M', 'q', 'dphi'],
+)
+
+figname = args.target[:-3] + 'png' # FIXME? could be fragile
+if args.verbose:
+    print('    saving: '+figname)
+fig.savefig(figname)
+plt.close(fig)

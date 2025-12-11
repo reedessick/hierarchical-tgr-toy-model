@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+
+"""a quick inference script
+"""
+__author__ = "Reed Essick (reed.essick@gmail.com)"
+
+#-------------------------------------------------
+
+import numpy as np
+
+import h5py
+
+import matplotlib
+matplotlib.use("Agg")
+from matplotlib import pyplot as plt
+
+import corner
+
+import jax
+from jax import random
+from jax import numpy as jnp
+from jax.scipy.special import logsumexp as jlogsumexp
+
+import numpyro
+from numpyro import handlers
+import numpyro.distributions as dist
+from numpyro.infer import (MCMC, NUTS, init_to_value)
+
+numpyro.enable_x64() # improve default numerical precision
+
+from argparse import ArgumentParser
+
+#-------------------------------------------------
+
+parser = ArgumentParser()
+
+parser.add_argument('catalog', type=str)
+parser.add_argument('samples', type=str)
+
+parser.add_argument('--seed', default=123, type=int)
+
+parser.add_argument('--num-warmup', default=100, type=int)
+parser.add_argument('--num-samples', default=5000, type=int)
+
+parser.add_argument('--num-warmup-prior', default=None, type=int)
+parser.add_argument('--num-samples-prior', default=None, type=int)
+
+parser.add_argument('-v', '--verbose', default=False, action='store_true')
+
+args = parser.parse_args()
+
+#-------------------------------------------------
+
+if args.verbose:
+    print('loading catalog from: '+args.catalog)
+
+with h5py.File(args.catalog, 'r') as obj:
+    meta = dict(obj.attrs.items())
+    data = dict((k, obj[k][:]) for k in obj.keys())
+
+if args.verbose:
+    print('    found %d events' % meta['num'])
+
+#------------------------
+
+# define model
+
+def prior():
+    # draw hyperparameters
+    mean0 = numpyro.sample('mean0', dist.Normal(0.0, 1.0))
+    stdv0 = numpyro.sample('stdv0', dist.Uniform(0.0, 4.0))
+    p = numpyro.sample('p', dist.Normal(-2.0, 1.0))
+
+    return mean0, stdv0, p
+
+def model():
+    mean0, stdv0, p = prior()
+
+    mean = mean0 * data['M']**p
+    stdv = stdv0 * data['M']**p
+
+    numpyro.sample('dphi', dist.Normal(mean, stdv), obs=data['dphi'])
+
+#------------------------    
+
+# run sampler
+
+num_warmup_prior = args.num_warmup_prior if args.num_warmup_prior is not None else args.num_warmup
+num_samples_prior = args.num_samples_prior if args.num_samples_prior is not None else args.num_samples
+
+if args.verbose:
+    print('drawing %d samples from the prior with %d warmup and seed=%d' % \
+        (num_samples_prior, num_warmup_prior, args.seed))
+
+mcmc = MCMC(
+    NUTS(prior),
+    num_warmup=num_warmup_prior,
+    num_samples=num_samples_prior,
+)
+mcmc.run(random.PRNGKey(args.seed))
+prior_samples = mcmc.get_samples()
+
+#---
+
+if args.verbose:
+    print('drawing %d samples from the posterior with %d warmup and seed=%d' % \
+        (args.num_samples, args.num_warmup, args.seed))
+
+mcmc = MCMC(NUTS(model), num_warmup=args.num_warmup, num_samples=args.num_samples)
+mcmc.run(random.PRNGKey(args.seed))
+posterior_samples = mcmc.get_samples()
+
+#------------------------
+
+# save samples
+
+if args.verbose:
+    print('writing samples to: '+args.samples)
+
+with h5py.File(args.samples, 'w') as obj:
+    grp = obj.create_group('prior')
+    for k, v in prior_samples.items():
+        grp.create_dataset(k, data=v)
+
+    grp = obj.create_group('posterior')
+    for k, v in posterior_samples.items():
+        grp.create_dataset(k, data=v)
+
+#------------------------
+
+# make a simple figure
+
+if args.verbose:
+    print('plotting')
+
+labels = ['mean0', 'stdv0', 'p']
+truth = [meta['mean0'], meta['stdv0'], meta['p']]
+
+### prior
+atad = np.transpose([
+    prior_samples['mean0'],
+    prior_samples['stdv0'],
+    prior_samples['p'],
+])
+
+fig = corner.corner(
+    atad,
+    color='b',
+    truths=truth,
+    truth_color='grey',
+    hist_kwargs=dict(density=True),
+    bins=min(100, max(10, int(0.3*len(atad)**0.5))),
+)
+
+### posterior
+
+atad = np.transpose([
+    posterior_samples['mean0'],
+    posterior_samples['stdv0'],
+    posterior_samples['p'],
+])
+
+ranges = []
+for key in ['mean0', 'stdv0', 'p']:
+    m = np.min(posterior_samples[key])
+    M = np.max(posterior_samples[key])
+    d = (M-m)*0.5
+    ranges.append((m-d, M+d))
+
+fig = corner.corner(
+    atad,
+    color='r',
+    labels=labels,
+    range=ranges,
+    hist_kwargs=dict(histtype='stepfilled', alpha=0.50, density=True),
+    bins=min(100, max(10, int(0.3*len(atad)**0.5))),
+    fig=fig,
+)
+
+### decorate
+
+fig.text(0.9, 0.90, 'truth', color='k', ha='center')
+fig.text(0.9, 0.85, 'prior', color='b', ha='center')
+fig.text(0.9, 0.80, 'posterior', color='r', ha='center')
+
+for ax in fig.axes:
+    ax.tick_params(direction='in', which='both')
+
+### save
+
+figname = args.samples[:-3] + 'png' # FIXME! could be fragile!
+if args.verbose:
+    print('    saving: '+figname)
+fig.savefig(figname)
+plt.close(fig)
