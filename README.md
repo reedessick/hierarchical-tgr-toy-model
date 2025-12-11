@@ -107,6 +107,7 @@ This model assumes a deterministic model for `dphi` that should nevertheless be 
 ```math
 \delta\phi = \frac{1}{M^4}
 ```
+This will test whether the assumption that `dphi` is random affects our ability to recover the hyperparameters.
 
 |catalog|posterior|posterior(one scaling)|
 |---|---|---|
