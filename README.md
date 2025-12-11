@@ -3,8 +3,8 @@ Workflow should go something like:
 ```
 for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q
 do
-    ./generate 1000 catalog_${MODE}.hdf -v
-    ./infer catalog_${MODE}.hdf samples_${MODE}.hdf -v
+    ./generate 1000 catalog_${MODE}.hdf --seed 123 -v
+    ./infer catalog_${MODE}.hdf samples_${MODE}.hdf --seed 456 -v
 done
 ```
 
@@ -25,6 +25,7 @@ The catalog is generated with the same model that's used during recovery
 ```math
 \delta\phi \sim \mathcal{N}(\mu_0 M^{p_\mu}, \sigma_0 M^{p_\sigma})
 ```
+We expect good recovery, and this is observed.
 
 |catalog|posterior|
 |---|---|
@@ -42,6 +43,7 @@ for which
 ```math
 \sigma^2 = 2/\gamma^2
 ```
+We expect good recovery of the first 2 moments, and this is what's observed.
  
 |catalog|posterior|
 |---|---|
@@ -62,6 +64,8 @@ and
 ```math
 \sigma = \frac{1}{\gamma}
 ```
+We expect good recovery of the first 2 moments, even though the true distribution is not symmetric.
+This is what's observed.
 
 |catalog|posterior|
 |---|---|
@@ -83,6 +87,8 @@ and
 ```math
 \sigma = \sigma_0 M^{p_\sigma} e^{2q}
 ```
+Here, we do not expect good recovery of the first 2 moments because they depend on more than just `M`.
+As expected, we observe large biases, although the scaling of the moments with `M` is still recovered reasonably well.
 
 |catalog|posterior|
 |---|---|

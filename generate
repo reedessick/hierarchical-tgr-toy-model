@@ -28,10 +28,17 @@ parser.add_argument('num', type=int)
 parser.add_argument('target', type=str)
 
 parser.add_argument('--dphi-mode', default='scaled_normal', type=str)
+parser.add_argument('--seed', default=None, type=int)
 
 parser.add_argument('-v', '--verbose', default=False, action='store_true')
 
 args = parser.parse_args()
+
+#-------------------------------------------------
+
+if args.seed:
+    if args.verbose:
+        print('setting numpy.random.seed(%d)' % args.seed)
 
 #-------------------------------------------------
 
@@ -98,8 +105,8 @@ elif args.dphi_mode == 'scaled_exp':
     logprob_dphi = -gamma*(dphi - a) + np.log(gamma)
 
 elif args.dphi_mode == 'scaled_normal_q':
-    mean = meta['mean0'] * M**meta['exp_mean'] * (1 - np.exp(q/0.5)) # just some strong function of q
-    stdv = meta['stdv0'] * M**meta['exp_stdv'] * np.exp(q/0.5)
+    mean = meta['mean0'] * M**meta['exp_mean'] * (1 - np.exp(q/0.25)) # just some strong function of q
+    stdv = meta['stdv0'] * M**meta['exp_stdv'] * np.exp(q/0.25)
 
     dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
@@ -115,6 +122,9 @@ if args.verbose:
 with h5py.File(args.target, 'w') as obj:
     for k, v in meta.items():
         obj.attrs.create(k, v)
+
+    if args.seed is not None:
+        obj.attrs.create('seed', args.seed)
 
     obj.create_dataset('M', data=M)
     obj.create_dataset('logprob_M', data=logprob_M)
