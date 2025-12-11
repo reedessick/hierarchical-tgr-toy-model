@@ -98,3 +98,14 @@ As expected, we observe large biases, although the scaling of the moments with `
 |catalog|posterior|posterior(one scaling)|
 |---|---|---|
 |<img src="catalog_scaled_normal_q.png">|<img src="samples_scaled_normal_q.png">|<img src="samples_scaled_normal_q_one_scaling.png">|
+
+### sGB
+
+Assuming I wrote down the correct functional form for `dphi` in scalar-Gauss-Bonnet, this model generates data using a deterministic function
+```math
+\delta \phi = \frac{1}{M^4}\left( \frac{(s_2 m_1^2 - s_1 m_2^2)^2}{M^4} \right)
+```
+
+|catalog|posterior|posterior(one scaling)|
+|---|---|---|
+|<img src="catalog_sGB.png">|<img src="samples_sGB.png">|<img src="samples_sGB_one_scaling.png">|

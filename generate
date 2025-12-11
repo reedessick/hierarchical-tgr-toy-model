@@ -50,6 +50,8 @@ meta = dict(
     max_M = 100,
     min_q = 0.1,
     max_q = 1.0,
+    min_s = -1.0,
+    max_s = +1.0,
     mean0 = 1.0,
     stdv0 = 2.0,
     exp_mean = -2.0,
@@ -71,6 +73,17 @@ if args.verbose:
     print('drawing %d mass ratio samples uniformly between %f - %f' % (args.num, meta['min_q'], meta['max_q']))
 q = np.random.random(args.num) * (meta['max_q'] - meta['min_q']) + meta['min_q']
 logprob_q = np.ones(args.num, dtype=float) / (meta['max_q'] - meta['min_q'])
+
+#------------------------
+
+# draw spin samples
+if args.verbose:
+    print('drawing %d spin samples uniformly between %f - %f for each component separately' % \
+        (args.num, meta['min_s'], meta['max_s']))
+
+s1, s2 = np.random.random((2, args.num)) * (meta['max_s'] - meta['min_s']) + meta['min_s']
+logprob_s1 = np.ones(args.num, dtype=float) / (meta['max_s'] - meta['min_s'])
+logprob_s2 = np.ones(args.num, dtype=float) / (meta['max_s'] - meta['min_s'])
 
 #------------------------
 
@@ -112,6 +125,10 @@ elif args.dphi_mode == 'scaled_normal_q':
     dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
+elif args.dphi_mode == 'sGB':
+    dphi = (20/M)**-4 * ((s2 - s1*q**2)**2/(1+q)**4)
+    logprob_dphi = np.zeros(args.num, dtype=float) # set this to be constant because this is determinstic
+
 else:
     raise ValueError('--dphi=%s not understood' % args.dpi)
 
@@ -132,6 +149,12 @@ with h5py.File(args.target, 'w') as obj:
 
     obj.create_dataset('q', data=q)
     obj.create_dataset('logprob_q', data=logprob_q)
+
+    obj.create_dataset('s1', data=s1)
+    obj.create_dataset('logprob_s1', data=logprob_s1)
+
+    obj.create_dataset('s2', data=s2)
+    obj.create_dataset('logprob_s2', data=logprob_s2)
 
     obj.create_dataset('dphi', data=dphi)
     obj.create_dataset('logprob_dphi', data=logprob_dphi)
