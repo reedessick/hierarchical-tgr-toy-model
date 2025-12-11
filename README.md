@@ -52,7 +52,7 @@ for which
 This catalog is generated with a different model than what's used during recovery.
 This model has the correct scaling of moments with `M`, but is asymmetric (and therefore is not Gaussian).
 ```math
-\delta\phi \sim \frac{gamma} \exp\left(-gamma (\delta \phi - a)\right) \Theta(\delta \phi \geq a)
+\delta\phi \sim \gamma \exp\left(-gamma (\delta \phi - a)\right) \Theta(\delta \phi \geq a)
 ```
 In this case
 ```math
