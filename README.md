@@ -49,10 +49,41 @@ for which
 
 ### `scaled_exp`
 
-catalog_scaled_exp.png
-samples_scaled_ex.png
+This catalog is generated with a different model than what's used during recovery.
+This model has the correct scaling of moments with `M`, but is asymmetric (and therefore is not Gaussian).
+```math
+\delta\phi \sim \frac{gamma} \exp\left(-gamma (\delta \phi - a)\right) \Theta(\delta \phi \geq a)
+```
+In this case
+```math
+\mu = a + \frac{1/\gamma}
+```
+and
+```math
+\sigma = 1/\gamma
+```
+
+|catalog|posterior|
+|---|---|
+|<img src="catalog_scaled_exp.png">|<img src="samples_scaled_ex.png">|
 
 ### `scaled_normal_q`
 
-catalog_scaled_normal_q.png
-samples_scaled_normal_q.png
+Finally, this catalog is generated with a different model than what's used during recovery.
+The model does not have the correct scaling of moments with `M` and additionally depends on `q` in a "relatively strong" way.
+The model is Gaussian.
+```math
+\delta\phi \sim \mathcal{N}(\mu, \sigma)
+```
+where
+```math
+\mu = \mu_0 M^{p_\mu} \left(1 - e^{2q})
+```
+and
+```math
+\sigma = \sigma_0 M^{p_\sigma} e^{2q}
+```
+
+|catalog|posterior|
+|---|---|
+|<img src="catalog_scaled_normal_q.png">|<img src="samples_scaled_normal_q.png">|
