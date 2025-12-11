@@ -99,12 +99,28 @@ As expected, we observe large biases, although the scaling of the moments with `
 |---|---|---|
 |<img src="catalog_scaled_normal_q.png">|<img src="samples_scaled_normal_q.png">|<img src="samples_scaled_normal_q_one_scaling.png">|
 
+---
+
+### deterministic
+
+This model assumes a deterministic model for `dphi` that should nevertheless be consistent with our recovery model if `stdv0=0`.
+```math
+\delta\phi = \frac{1}{M^4}
+```
+
+|catalog|posterior|posterior(one scaling)|
+|---|---|---|
+|<img src="catalog_deterministic.png">|<img src="samples_deterministic.png">|<img src="samples_deterministic_one_scaling.png">|
+
 ### sGB
 
 Assuming I wrote down the correct functional form for `dphi` in scalar-Gauss-Bonnet, this model generates data using a deterministic function
 ```math
-\delta \phi = \frac{1}{M^4}\left( \frac{(s_2 m_1^2 - s_1 m_2^2)^2}{M^4} \right) = \frac{1}{M^4} \left( \frac{(s_2 - s1 q^2)^2}{(1+q)^4} \right)
+\delta \phi = \frac{1}{M^4}\left( \frac{(s_2 m_1^2 - s_1 m_2^2)^2}{M^4} \right) = \frac{1}{M^4} \left( \frac{(s_2 - s_1 q^2)^2}{(1+q)^4} \right)
 ```
+Here, the marginal distribution over `dphi` is entirely determined by the distributions over `M`, `q`, `s1`, and `s2`.
+In general, we would not expected it to be symmetric (and therefore it may not be Gaussian).
+It also clearly depends on more than just `M`.
 
 |catalog|posterior|posterior(one scaling)|
 |---|---|---|

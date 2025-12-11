@@ -125,8 +125,13 @@ elif args.dphi_mode == 'scaled_normal_q':
     dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
+elif args.dphi_mode == 'deterministic':
+    meta['stdv0'] = 0.0
+    dphi = meta['mean0'] * M**meta['exp_mean']
+    logprob_dphi = np.zeros(args.num, dtype=float) # set this to be constant because this is deterministic
+
 elif args.dphi_mode == 'sGB':
-    dphi = (20/M)**-4 * ((s2 - s1*q**2)**2/(1+q)**4)
+    dphi = (10/M)**4 * ((s2 - s1*q**2)**2/(1+q)**4)
     logprob_dphi = np.zeros(args.num, dtype=float) # set this to be constant because this is determinstic
 
 else:
