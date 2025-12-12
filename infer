@@ -71,7 +71,7 @@ if args.verbose:
 def prior(one_scaling):
     # draw hyperparameters
     mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
-    stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 5.0))
+    stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
 
     exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
     if one_scaling:
