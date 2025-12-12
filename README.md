@@ -35,13 +35,15 @@ done
 This can be done with something like
 ```
 mkdir -p different-catalogs
-for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q
+for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q deterministic sGB
 do
     for SEED in $(seq 1 50)
     do
         ./generate \
             1000 \
             different-catalogs/catalog_${MODE}-${SEED}.hdf \
+            --dphi-mode ${MODE} \
+            --m-mode M \
             --seed ${SEED} \
             -v
 
