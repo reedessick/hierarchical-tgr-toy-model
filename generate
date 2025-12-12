@@ -27,6 +27,7 @@ parser.add_argument('num', type=int)
 
 parser.add_argument('target', type=str)
 
+parser.add_argument('--m-mode', default='M', type=str)
 parser.add_argument('--dphi-mode', default='scaled_normal', type=str)
 parser.add_argument('--seed', default=None, type=int)
 
@@ -60,19 +61,32 @@ meta = dict(
 
 #------------------------
 
-# draw total mass and mass ratio
-if args.verbose:
-    print('drawing %d total mass samples uniformly between %f - %f' % (args.num, meta['min_M'], meta['max_M']))
-M = np.random.random(args.num) * (meta['max_M'] - meta['min_M']) + meta['min_M']
-logprob_M = np.ones(args.num, dtype=float) / (meta['max_M'] - meta['min_M'])
-
-#------------------------
-
 # draw mass ratio samples
 if args.verbose:
     print('drawing %d mass ratio samples uniformly between %f - %f' % (args.num, meta['min_q'], meta['max_q']))
 q = np.random.random(args.num) * (meta['max_q'] - meta['min_q']) + meta['min_q']
 logprob_q = np.ones(args.num, dtype=float) / (meta['max_q'] - meta['min_q'])
+
+#------------------------
+
+if args.m_mode == 'M':
+    # draw total mass
+    if args.verbose:
+        print('drawing %d total mass samples uniformly between %f - %f' % (args.num, meta['min_M'], meta['max_M']))
+    M = np.random.random(args.num) * (meta['max_M'] - meta['min_M']) + meta['min_M']
+    logprob_M = np.ones(args.num, dtype=float) / (meta['max_M'] - meta['min_M'])
+
+elif args.m_mode == 'm1':
+    # draw m1 and compute M from m1 and q
+    if args.verbose:
+        print('drawing %d mass1 samples uniformly betwen %f - %f' % (args.num, meta['min_M'], meta['max_M']))
+    m1 = np.random.random(args.num) * (meta['max_M'] - meta['min_M']) + meta['min_M']
+    logprob_m1 = np.ones(args.num, dtype=float) / (meta['max_M'] - meta['min_M'])
+
+    M = m1 * (1 + q)
+
+else:
+    raise ValueError('--m-mode=%s not understood' % args.m_mode)
 
 #------------------------
 
@@ -150,7 +164,11 @@ with h5py.File(args.target, 'w') as obj:
         obj.attrs.create('seed', args.seed)
 
     obj.create_dataset('M', data=M)
-    obj.create_dataset('logprob_M', data=logprob_M)
+    obj.create_dataset('m1', data=M/(1+q))
+    if args.m_mode == 'M':
+        obj.create_dataset('logprob_M', data=logprob_M)
+    elif args.m_mode == 'm1':
+        obj.create_dataset('logprob_m1', data=logprob_m1)
 
     obj.create_dataset('q', data=q)
     obj.create_dataset('logprob_q', data=logprob_q)

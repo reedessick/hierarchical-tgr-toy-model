@@ -1,11 +1,33 @@
 Workflow should go something like:
 
 ```
-for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q
+for DPHI_MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q deterministic sGB
 do
-    ./generate 1000 catalog_${MODE}.hdf --seed 123 -v
-    ./infer catalog_${MODE}.hdf samples_${MODE}.hdf --seed 456 -v
-    ./infer catalog_${MODE}.hdf samples_${MODE}_one_scaling.hdf --one-scaling --seed 456 -v
+    for M_MODE in M m1
+    do
+
+        ./generate \
+            1000 \
+            catalog_${DPHI_MODE}-${M_MODE}.hdf \
+            --dphi-mode ${DPHI_MODE} \
+            --m-mode ${M_MODE} \
+            --seed 1234 \
+            -v
+
+        ./infer \
+            catalog_${DPHI_MODE}-${M_MODE}.hdf \
+            samples_${DPHI_MODE}-${M_MODE}.hdf \
+            --seed 5678 \
+            -v
+
+        ./infer \
+            catalog_${DPHI_MODE}-${M_MODE}.hdf \
+            samples_${DPHI_MODE}-${M_MODE}_one_scaling.hdf \
+            --one-scaling \
+            --seed 5678 \
+            -v
+
+    done
 done
 ```
 
@@ -61,9 +83,10 @@ The catalog is generated with the same model that's used during recovery
 ```
 We expect good recovery, and this is observed.
 
-|catalog|posterior|posterior(one scaling)|
-|---|---|---|
-|<img src="catalog_scaled_normal.png">|<img src="samples_scaled_normal.png">|<img src="samples_scaled_normal_one_scaling.png">|
+|mass|catalog|posterior|posterior(one scaling)|
+|---|---|---|---|
+|M|<img src="catalog_scaled_normal-M.png">|<img src="samples_scaled_normal-M.png">|<img src="samples_scaled_normal_one_scaling-M.png">|
+|m1|<img src="catalog_scaled_normal-m1.png">|<img src="samples_scaled_normal-m1.png">|<img src="samples_scaled_normal_one_scaling-m1.png">|
 
 ### `scaled_exp_abs`
 
