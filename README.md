@@ -15,7 +15,7 @@ This can be done with something like
 mkdir -p different-catalogs
 for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q
 do
-    for SEED in $(seq 1 100)
+    for SEED in $(seq 1 50)
     do
         ./generate \
             1000 \
