@@ -85,8 +85,8 @@ We expect good recovery, and this is observed.
 
 |mass|catalog|posterior|posterior(one scaling)|
 |---|---|---|---|
-|M|<img src="catalog_scaled_normal-M.png">|<img src="samples_scaled_normal-M.png">|<img src="samples_scaled_normal_one_scaling-M.png">|
-|m1|<img src="catalog_scaled_normal-m1.png">|<img src="samples_scaled_normal-m1.png">|<img src="samples_scaled_normal_one_scaling-m1.png">|
+|M|<img src="catalog_scaled_normal-M.png">|<img src="samples_scaled_normal-M.png">|<img src="samples_scaled_normal-M_one_scaling.png">|
+|m1|<img src="catalog_scaled_normal-m1.png">|<img src="samples_scaled_normal-m1.png">|<img src="samples_scaled_normal-m1_one_scaling.png">|
 
 ### `scaled_exp_abs`
 
