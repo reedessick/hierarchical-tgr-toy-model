@@ -9,7 +9,36 @@ do
 done
 ```
 
-**NOTE**, we may also set up p-p test to demonstrate propper coverage?
+**NOTE**, we may also set up p-p test to demonstrate propper coverage.
+This can be done with something like
+```
+mkdir -p different-catalogs
+for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q
+do
+    for SEED in $(seq 1 100)
+    do
+        ./generate \
+            1000 \
+            different-catalogs/catalog_${MODE}-${SEED}.hdf \
+            --seed ${SEED} \
+            -v
+
+        ./infer \
+            different-catalogs/catalog_${MODE}-${SEED}.hdf \
+            different-catalogs/samples_${MODE}-${SEED}.hdf \
+            --seed 456 \
+            -v
+
+        ./infer \
+            different-catalogs/catalog_${MODE}-${SEED}.hdf \
+            different-catalogs/samples_${MODE}-${SEED}_one_scaling.hdf \
+            --one-scaling \
+            --seed 456 \
+            -v
+
+    done
+done
+```
 
 ---
 
