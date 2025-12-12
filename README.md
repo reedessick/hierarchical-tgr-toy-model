@@ -75,6 +75,10 @@ The posterior labeled "one scaling" are for a nested model with the additional p
 p_\mu = p_\sigma
 ```
 
+Catalogs labeled `M` were drawn with `M` and `q` independent.
+Catalogs labeled `m1` were drawn with `m1` and `q` independent. For these catalogs, `M` was computed as `M = m1*(1+q)`.
+In all cases, we recover with a model that assumes `dphi` only depends directly on `M`.
+
 ### `scaled_normal`
 
 The catalog is generated with the same model that's used during recovery
@@ -102,9 +106,10 @@ for which
 ```
 We expect good recovery of the first 2 moments, and this is what's observed.
  
-|catalog|posterior|posterior(one scaling)|
-|---|---|---|
-|<img src="catalog_scaled_exp_abs.png">|<img src="samples_scaled_exp_abs.png">|<img src="samples_scaled_exp_abs_one_scaling.png">|
+|mass|catalog|posterior|posterior(one scaling)|
+|---|---|---|---|
+|M|<img src="catalog_scaled_exp_abs-M.png">|<img src="samples_scaled_exp_abs-M.png">|<img src="samples_scaled_exp_abs-M_one_scaling.png">|
+|m1|<img src="catalog_scaled_exp_abs-m1.png">|<img src="samples_scaled_exp_abs-m1.png">|<img src="samples_scaled_exp_abs-m1_one_scaling.png">|
 
 ### `scaled_exp`
 
@@ -124,9 +129,10 @@ and
 We expect good recovery of the first 2 moments, even though the true distribution is not symmetric.
 This is what's observed.
 
-|catalog|posterior|posterior(one scaling)|
-|---|---|---|
-|<img src="catalog_scaled_exp.png">|<img src="samples_scaled_exp.png">|<img src="samples_scaled_exp_one_scaling.png">|
+|mass|catalog|posterior|posterior(one scaling)|
+|---|---|---|---|
+|M|<img src="catalog_scaled_exp-M.png">|<img src="samples_scaled_exp-M.png">|<img src="samples_scaled_exp-M_one_scaling.png">|
+|m1|<img src="catalog_scaled_exp-m1.png">|<img src="samples_scaled_exp-m1.png">|<img src="samples_scaled_exp-m1_one_scaling.png">|
 
 ### `scaled_normal_q`
 
@@ -147,9 +153,10 @@ and
 Here, we do not expect good recovery of the first 2 moments because they depend on more than just `M`.
 As expected, we observe large biases, although the scaling of the moments with `M` is still recovered reasonably well.
 
-|catalog|posterior|posterior(one scaling)|
-|---|---|---|
-|<img src="catalog_scaled_normal_q.png">|<img src="samples_scaled_normal_q.png">|<img src="samples_scaled_normal_q_one_scaling.png">|
+|mass|catalog|posterior|posterior(one scaling)|
+|---|---|---|---|
+|M|<img src="catalog_scaled_normal_q-M.png">|<img src="samples_scaled_normal_q-M.png">|<img src="samples_scaled_normal_q-M_one_scaling.png">|
+|m1|<img src="catalog_scaled_normal_q-m1.png">|<img src="samples_scaled_normal_q-m1.png">|<img src="samples_scaled_normal_q-m1_one_scaling.png">|
 
 ---
 
@@ -164,9 +171,10 @@ This will test whether the assumption that `dphi` is random affects our ability 
 While it appears that there is a bias in the recovered value of `stdv0` and `exp_stdv`, the sampler really just seemed to get stuck in a region of parameter space that nevertheless corresponds to essentially zero with for all relevant masses.
 Similarly, if we assume "one scaling", we can introduce a slight bias in the recovery of `exp_mean` if the prior limits `stdv0` to be reasonably large.
 
-|catalog|posterior|posterior(one scaling)|
-|---|---|---|
-|<img src="catalog_deterministic.png">|<img src="samples_deterministic.png">|<img src="samples_deterministic_one_scaling.png">|
+|mass|catalog|posterior|posterior(one scaling)|
+|---|---|---|---|
+|M|<img src="catalog_deterministic-M.png">|<img src="samples_deterministic-M.png">|<img src="samples_deterministic-M_one_scaling.png">|
+|m1|<img src="catalog_deterministic-m1.png">|<img src="samples_deterministic-m1.png">|<img src="samples_deterministic-m1_one_scaling.png">|
 
 ### sGB
 
@@ -178,6 +186,7 @@ Here, the marginal distribution over `dphi` is entirely determined by the distri
 In general, we would not expected it to be symmetric (and therefore it may not be Gaussian).
 It also clearly depends on more than just `M`.
 
-|catalog|posterior|posterior(one scaling)|
-|---|---|---|
-|<img src="catalog_sGB.png">|<img src="samples_sGB.png">|<img src="samples_sGB_one_scaling.png">|
+|mass|catalog|posterior|posterior(one scaling)|
+|---|---|---|---|
+|M|<img src="catalog_sGB-M.png">|<img src="samples_sGB-M.png">|<img src="samples_sGB-M_one_scaling.png">|
+|m1|<img src="catalog_sGB-m1.png">|<img src="samples_sGB-m1.png">|<img src="samples_sGB-m1_one_scaling.png">|
