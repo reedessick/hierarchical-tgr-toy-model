@@ -17,6 +17,8 @@ do
         ./infer \
             catalog_${DPHI_MODE}-${M_MODE}.hdf \
             samples_${DPHI_MODE}-${M_MODE}.hdf \
+            --num-warmup   5000 \
+            --num-samples 50000 \
             --seed 5678 \
             -v
 
@@ -24,6 +26,8 @@ do
             catalog_${DPHI_MODE}-${M_MODE}.hdf \
             samples_${DPHI_MODE}-${M_MODE}_one_scaling.hdf \
             --one-scaling \
+            --num-warmup   5000 \
+            --num-samples 50000 \
             --seed 5678 \
             -v
 
