@@ -199,6 +199,25 @@ fig.suptitle('$\delta \phi \sim \mathcal{N}(\mu, \sigma)$\n$\mu = \mu_0  M^{p_\m
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')
 
+'''
+# compute and add sample moments
+scaled_stdv = meta['stdv0']*data['M']**meta['exp_stdv']
+scaled_mean = meta['mean0']*data['M']**meta['exp_mean']
+
+z = (data['dphi'] - scaled_mean) / scaled_stdv
+mean_z = np.mean(z)
+stdv_z = np.std(z)
+
+txt = 'sample_mean(z) = %.3f\nsample_stdv(z) = %.3f' % (mean_z, stdv_z)
+
+if stdv_z < 1:
+    txt += '\nexpect inferred $\sigma_0$ to be too big'
+else:
+    txt += '\nexpect inferred $\sigma_0$ to be too small'
+
+fig.text(0.5, 0.85, txt, ha='center', va='center')
+'''
+
 ### save
 
 figname = args.samples[:-3] + 'png' # FIXME! could be fragile!

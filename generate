@@ -111,6 +111,15 @@ if args.dphi_mode == 'scaled_normal':
     dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
+elif args.dphi_mode == 'scaled_student_t':
+    raise NotImplementedError
+
+elif args.dphi_mode == 'scaled_half_student_t':
+    raise NotImplementedError
+
+elif args.dphi_mode == 'scaled_noncentral_student_t':
+    raise NotImplementedError
+
 elif args.dphi_mode == 'scaled_exp_abs':
     gamma = 2**0.5/stdv
 
