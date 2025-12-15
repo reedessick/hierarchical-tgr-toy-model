@@ -116,9 +116,13 @@ if args.verbose:
 mean = meta['mean0'] * M**meta['exp_mean']
 stdv = meta['stdv0'] * M**meta['exp_stdv']
 
+#---
+
 if args.dphi_mode == 'scaled_normal':
     dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
+
+#---
 
 elif args.dphi_mode == 'scaled_student_t':
     x = t.rvs(meta['num_dof'], size=args.num)
@@ -126,11 +130,15 @@ elif args.dphi_mode == 'scaled_student_t':
     dphi = x*scale + mean
     logprob_dphi = t.logpdf(x, meta['num_dof']) - np.log(scale)
 
+#---
+
 elif args.dphi_mode == 'scaled_noncentral_student_t':
     x = nct.rvs(meta['num_dof'], meta['noncentral'], size=args.num)
     scale = stdv/nct.std(meta['num_dof'], meta['noncentral'])
     dphi = (x - nct.mean(meta['num_dof'], meta['noncentral']))*scale + mean
     logprob_dphi = nct.logpdf(x, meta['num_dof'], meta['noncentral']) - np.log(scale)
+
+#---
 
 elif args.dphi_mode == 'scaled_exp_abs':
     gamma = 2**0.5/stdv
@@ -141,12 +149,16 @@ elif args.dphi_mode == 'scaled_exp_abs':
     
     logprob_dphi = -gamma*np.abs(dphi-mean) + np.log(0.5) + np.log(gamma)
 
+#---
+
 elif args.dphi_mode == 'scaled_exp':
     gamma = 1/stdv
     a = mean - 1/gamma
 
     dphi = (-np.log(1 - np.random.random(size=args.num)) / gamma) + a
     logprob_dphi = -gamma*(dphi - a) + np.log(gamma)
+
+#---
 
 elif args.dphi_mode == 'scaled_lognormal':
     s2 = np.log(1 + stdv**2/mean**2)
@@ -156,6 +168,8 @@ elif args.dphi_mode == 'scaled_lognormal':
     dphi = np.exp(logdphi)
     logprob_dphi = -0.5*(logdphi-mu)/s2 - 0.5*np.log(2*np.pi) - np.log(s2) - np.log(dphi)
 
+#---
+
 elif args.dphi_mode == 'scaled_powerlaw':
     alpha = -2 - (1 + mean**2/stdv**2)**0.5
     a = ((alpha+2)/(alpha+1)) * mean
@@ -163,18 +177,26 @@ elif args.dphi_mode == 'scaled_powerlaw':
     dphi = a * (1 - np.random.random(size=args.num))**(1./(alpha+1))
     logprob_dphi = np.abs(alpha+1)/a**(alpha+1) * dphi**alpha
 
+#---
+
 elif args.dphi_mode == 'scaled_normal_q':
     dphi = mean + stdv*np.random.normal(size=args.num)
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
+
+#---
 
 elif args.dphi_mode == 'deterministic':
     meta['stdv0'] = 0.0
     dphi = mean
     logprob_dphi = np.zeros(args.num, dtype=float) # set this to be constant because this is deterministic
 
+#---
+
 elif args.dphi_mode == 'sGB':
     dphi = (10/M)**4 * ((s2 - s1*q**2)**2/(1+q)**4)
     logprob_dphi = np.zeros(args.num, dtype=float) # set this to be constant because this is determinstic
+
+#---
 
 else:
     raise ValueError('--dphi=%s not understood' % args.dpi)

@@ -42,6 +42,7 @@ parser.add_argument('--mode', default='normal', type=str,
     help='what type of distribution to assume within recovery')
 
 parser.add_argument('--one-scaling', default=False, action='store_true')
+parser.add_argument('--fix', default=[], type=str, action='append', nargs=2)
 
 parser.add_argument('--seed', default=123, type=int)
 
@@ -54,6 +55,8 @@ parser.add_argument('--num-samples-prior', default=None, type=int)
 parser.add_argument('-v', '--verbose', default=False, action='store_true')
 
 args = parser.parse_args()
+
+fixed = dict((k, float(v)) for k, v in args.fix)
 
 #-------------------------------------------------
 
@@ -76,10 +79,10 @@ if args.verbose:
 
 if args.mode == 'normal':
 
-    def prior(one_scaling):
+    def prior(one_scaling, **ignored):
         # draw hyperparameters
         mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
-        stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
+        stdv0 = numpyro.sample('stdv0', dist.Chi2(2.0))
 
         exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
         if one_scaling:
@@ -89,21 +92,23 @@ if args.mode == 'normal':
 
         return mean0, stdv0, exp_mean, exp_stdv
 
-    def model(one_scaling):
+    def model(one_scaling, **ignored):
         mean0, stdv0, exp_mean, exp_stdv = prior(one_scaling)
 
         mean = mean0 * data['M']**exp_mean
         stdv = stdv0 * data['M']**exp_stdv
 
         numpyro.sample('dphi', dist.Normal(mean, stdv), obs=data['dphi'])
+#        z = (data['dphi'] - mean) / stdv # convert to z-score
+#        numpyro.sample('dphi', dist.Normal(0, 1), obs=z)
 
 #---
 
 elif args.mode == 'student_t':
-    def prior(one_scaling):
+    def prior(one_scaling, num_dof=None, **ignored):
         # draw hyperparameters
         mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
-        stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
+        stdv0 = numpyro.sample('stdv0', dist.Chi2(2.0))
 
         exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
         if one_scaling:
@@ -111,27 +116,30 @@ elif args.mode == 'student_t':
         else:
             exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
 
-        num_dof = numpyro.sample('num_dof', dist.Chi2(4.0)) # FIXME? not sure what number of DOF for prior is best...
+        if num_dof is None:
+            num_dof = numpyro.sample('num_dof', dist.Chi2(4.0)) # FIXME? not sure what number of DOF for prior is best...
+        else:
+            num_dof = numpyro.deterministic('num_dof', num_dof)
 
         return mean0, stdv0, exp_mean, exp_stdv, num_dof
 
-    def model(one_scaling):
-        mean0, stdv0, exp_mean, exp_stdv, num_dof = prior(one_scaling)
+    def model(one_scaling, num_dof=None, **ignored):
+        mean0, stdv0, exp_mean, exp_stdv, num_dof = prior(one_scaling, num_dof=num_dof)
 
         mean = mean0 * data['M']**exp_mean
         stdv = stdv0 * data['M']**exp_stdv
 
-        x = (data['dphi'] - mean)/stdv # convert to t-score
-
-        numpyro.sample('dphi', dist.StudentT(num_dof), obs=x)
+        numpyro.sample('dphi', dist.StudentT(num_dof, mean, stdv), obs=data['dphi'])
+#        t = (data['dphi'] - mean)/(stdv/(num_dof/(num_dof-2))**0.5) # convert to t-score
+#        numpyro.sample('dphi', dist.StudentT(num_dof), obs=t)
 
 #---
 
 elif args.mode == 'noncentral_student_t':
-    def prior(one_scaling):
+    def prior(one_scaling, num_dof=None, noncentral=None, **ignored):
         # draw hyperparameters
         mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
-        stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
+        stdv0 = numpyro.sample('stdv0', dist.Chi2(2.0))
 
         exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
         if one_scaling:
@@ -139,15 +147,25 @@ elif args.mode == 'noncentral_student_t':
         else:
             exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
 
-        num_dof = numpyro.sample('num_dof', dist.Chi2(4.0)) # FIXME? not sure what number of DOF for prior is best...
-        noncentral = numpyro.sample('noncentral', dist.Normal(0.0, 4.0)) # FIXME? also not sure about prior for this...
+        if num_dof is None:
+            num_dof = numpyro.sample('num_dof', dist.Chi2(4.0)) # FIXME? not sure what number of DOF for prior is best...
+        else:
+            num_dof = numpyro.deterministic('num_dof', num_dof)
+
+        if noncentral is None:
+            noncentral = numpyro.sample('noncentral', dist.Normal(0.0, 4.0)) # FIXME? also not sure about prior for this...
+        else:
+            noncentral = numpyro.deterministic('noncentral', noncentral)
 
         return mean0, stdv0, exp_mean, exp_stdv, num_dof, noncentral
 
-    def model(one_scaling):
-        mean0, stdv0, exp_mean, exp_stdv, num_dof, noncentral = prior(one_scaling)
+    def model(one_scaling, num_dof=None, noncentral=None, **ignored):
+        mean0, stdv0, exp_mean, exp_stdv, num_dof, noncentral = prior(one_scaling, num_dof=num_dof, noncentral=noncentral)
 
-        raise NotImplementedError
+        mean = mean0 * data['M']**exp_mean
+        stdv = stdv0 * data['M']**exp_stdv
+
+        raise NotImplementedError('''need to figure out how to compare to noncentral student-t variable''')
 
 #---
 
@@ -157,6 +175,14 @@ else:
 #------------------------    
 
 # run sampler
+
+if args.verbose:
+    if fixed:
+        print('fixing hyperparameters')
+        for k, v in fixed.items():
+            print('    %s = %.3f' % (k, v))
+    if args.one_scaling:
+        print('forcing scaling with M to be identical between mean and stdv')
 
 num_warmup_prior = args.num_warmup_prior if args.num_warmup_prior is not None else args.num_warmup
 num_samples_prior = args.num_samples_prior if args.num_samples_prior is not None else args.num_samples
@@ -170,7 +196,7 @@ mcmc = MCMC(
     num_warmup=num_warmup_prior,
     num_samples=num_samples_prior,
 )
-mcmc.run(random.PRNGKey(args.seed), args.one_scaling)
+mcmc.run(random.PRNGKey(args.seed), args.one_scaling, **fixed)
 prior_samples = mcmc.get_samples()
 
 #---
@@ -180,7 +206,7 @@ if args.verbose:
         (args.num_samples, args.num_warmup, args.seed))
 
 mcmc = MCMC(NUTS(model), num_warmup=args.num_warmup, num_samples=args.num_samples)
-mcmc.run(random.PRNGKey(args.seed), args.one_scaling)
+mcmc.run(random.PRNGKey(args.seed), args.one_scaling, **fixed)
 posterior_samples = mcmc.get_samples()
 
 #------------------------
@@ -224,13 +250,21 @@ elif args.mode == 'noncentral_student_t':
 
 ### prior
 
+ranges = []
+for key in keys:
+    m = min(np.min(prior_samples[key]), meta[key])
+    M = max(np.max(prior_samples[key]), meta[key])
+    d = max(0.01, (M-m)*0.1)
+    ranges.append((m-d, M+d))
+
 fig = corner.corner(
     np.transpose([prior_samples[key] for key in keys]),
     color='b',
     truths=truth,
     truth_color='k',
+    range=ranges,
     hist_kwargs=dict(density=True),
-    bins=min(100, max(10, int(0.3*num_prior_samples**0.5))),
+    bins=min(100, max(10, int(0.3*num_samples_prior**0.5))),
 )
 
 #---
@@ -241,7 +275,7 @@ ranges = []
 for key in keys:
     m = min(np.min(posterior_samples[key]), meta[key])
     M = max(np.max(posterior_samples[key]), meta[key])
-    d = (M-m)*0.1
+    d = max(0.01, (M-m)*0.1)
     ranges.append((m-d, M+d))
 
 fig = corner.corner(
@@ -260,7 +294,11 @@ fig.text(0.9, 0.900, 'truth', color='k', ha='center')
 fig.text(0.9, 0.875, 'prior', color='b', ha='center')
 fig.text(0.9, 0.850, 'posterior', color='r', ha='center')
 
-fig.suptitle('$\delta \phi \sim \mathcal{N}(\mu, \sigma)$\n$\mu = \mu_0  M^{p_\mu}$\n$\sigma = \sigma_0 M^{p_\sigma}$')
+if args.mode == 'normal':
+    fig.suptitle('''\
+$\delta \phi \sim \mathcal{N}(\mu, \sigma)$
+$\mu = \mu_0  M^{p_\mu}$
+$\sigma = \sigma_0 M^{p_\sigma}$''')
 
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')
