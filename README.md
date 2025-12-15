@@ -1,7 +1,17 @@
 Workflow should go something like:
 
 ```
-for DPHI_MODE in scaled_normal scaled_exp_abs scaled_exp scaled_lognormal scaled_powerlaw scaled_normal_q deterministic sGB
+for DPHI_MODE in \
+    scaled_normal \
+    scaled_exp_abs \
+    scaled_exp \
+    scaled_lognormal \
+    scaled_powerlaw \
+    scaled_student_t \
+    scaled_noncentral_student_t \
+    scaled_normal_q \
+    deterministic \
+    sGB
 do
     for M_MODE in M m1
     do
@@ -39,7 +49,7 @@ done
 This can be done with something like
 ```
 mkdir -p different-catalogs
-for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_normal_q deterministic sGB
+for MODE in scaled_normal scaled_exp_abs scaled_exp scaled_lognormal scaled_powerlaw scaled_normal_q deterministic sGB
 do
     for SEED in $(seq 1 50)
     do

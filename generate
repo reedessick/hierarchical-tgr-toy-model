@@ -7,6 +7,7 @@ __author__ = "Reed Essick (reed.essick@gmail.com)"
 #-------------------------------------------------
 
 import numpy as np
+from scipy.stats import (t, nct)
 
 import h5py
 
@@ -28,7 +29,13 @@ parser.add_argument('num', type=int)
 parser.add_argument('target', type=str)
 
 parser.add_argument('--m-mode', default='M', type=str)
+
 parser.add_argument('--dphi-mode', default='scaled_normal', type=str)
+parser.add_argument('--num-dof', default=10, type=float,
+    help='the number of degrees of freedom used when generating student-t samples')
+parser.add_argument('--noncentral', default=0, type=float,
+    help='the noncentrality parameter used in the non-central student-t distribution before rescaling moments')
+
 parser.add_argument('--seed', default=None, type=int)
 
 parser.add_argument('-v', '--verbose', default=False, action='store_true')
@@ -47,6 +54,8 @@ if args.seed:
 meta = dict(
     num=args.num,
     dphi_mode=args.dphi_mode,
+    num_dof=args.num_dof,
+    noncentral=args.noncentral,
     min_M = 10,
     max_M = 100,
     min_q = 0.1,
@@ -112,13 +121,14 @@ if args.dphi_mode == 'scaled_normal':
     logprob_dphi = -0.5*((dphi-mean)/stdv)**2 - 0.5*np.log(2*np.pi) - np.log(stdv)
 
 elif args.dphi_mode == 'scaled_student_t':
-    raise NotImplementedError
-
-elif args.dphi_mode == 'scaled_half_student_t':
-    raise NotImplementedError
+    x = t(meta['num_dof'], size=args.num)
+    dphi = x*(stdv/t.std(meta['num_dof'])) + mean
+    logprob_dphi = t.logpdf(x, meta['num_dof'])
 
 elif args.dphi_mode == 'scaled_noncentral_student_t':
-    raise NotImplementedError
+    x = nct(meta['num_dof'], meta['noncentral'], size=args.size)
+    dphi = (x - nct.mean(meta['num_dof'], meta['noncentral']))*(stdv/nct.std(meta['num_dof'], meta['noncentral'])) + mean
+    logprob_dphi = nct.logprob(x, meta['num_dof'], meta['noncentral'])
 
 elif args.dphi_mode == 'scaled_exp_abs':
     gamma = 2**0.5/stdv
