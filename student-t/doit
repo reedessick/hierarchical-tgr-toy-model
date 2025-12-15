@@ -1,0 +1,51 @@
+#!/bin/zsh
+
+NONCENTRAL=5
+
+for DPHI_MODE in scaled_normal scaled_student_t # scaled_noncentral_student_t
+do
+    for M_MODE in M m1
+    do
+
+        for NUM_DOF in 3 # 5 10 20 50 100
+        do
+
+            outdir="${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}"
+            mkdir -p $outdir
+
+            ./generate \
+                1000 \
+                ${outdir}/catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
+                --dphi-mode ${DPHI_MODE} \
+                --num-dof $NUM_DOF \
+                --noncentral $NONCENTRAL \
+                --m-mode ${M_MODE} \
+                --seed 1234 \
+                -v
+
+            for INF_MODE in normal student_t noncentral_student_t
+            do
+
+                ./infer \
+                    ${outdir}/catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
+                    ${outdir}/samples_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}_${INF_MODE}.hdf \
+                    --mode $INF_MODE \
+                    --num-warmup   5000 \
+                    --num-samples 50000 \
+                    --seed 5678 \
+                    -v
+
+                ./infer \
+                    ${outdir}/catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
+                    ${outdir}/samples_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}_${INF_MODE}_one_scaling.hdf \
+                    --mode $INF_MODE \
+                    --one-scaling \
+                    --num-warmup   5000 \
+                    --num-samples 50000 \
+                    --seed 5678 \
+                    -v
+
+            done
+        done
+    done
+done

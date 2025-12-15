@@ -38,6 +38,9 @@ parser = ArgumentParser()
 parser.add_argument('catalog', type=str)
 parser.add_argument('samples', type=str)
 
+parser.add_argument('--mode', default='normal', type=str,
+    help='what type of distribution to assume within recovery')
+
 parser.add_argument('--one-scaling', default=False, action='store_true')
 
 parser.add_argument('--seed', default=123, type=int)
@@ -68,26 +71,88 @@ if args.verbose:
 
 # define model
 
-def prior(one_scaling):
-    # draw hyperparameters
-    mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
-    stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
+if args.verbose:
+    print('defining model with mode=%s' % args.mode)
 
-    exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
-    if one_scaling:
-        exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
-    else:
-        exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
+if args.mode == 'normal':
 
-    return mean0, stdv0, exp_mean, exp_stdv
+    def prior(one_scaling):
+        # draw hyperparameters
+        mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
+        stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
 
-def model(one_scaling):
-    mean0, stdv0, exp_mean, exp_stdv = prior(one_scaling)
+        exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
+        if one_scaling:
+            exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
+        else:
+            exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
 
-    mean = mean0 * data['M']**exp_mean
-    stdv = stdv0 * data['M']**exp_stdv
+        return mean0, stdv0, exp_mean, exp_stdv
 
-    numpyro.sample('dphi', dist.Normal(mean, stdv), obs=data['dphi'])
+    def model(one_scaling):
+        mean0, stdv0, exp_mean, exp_stdv = prior(one_scaling)
+
+        mean = mean0 * data['M']**exp_mean
+        stdv = stdv0 * data['M']**exp_stdv
+
+        numpyro.sample('dphi', dist.Normal(mean, stdv), obs=data['dphi'])
+
+#---
+
+elif args.mode == 'student_t':
+    def prior(one_scaling):
+        # draw hyperparameters
+        mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
+        stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
+
+        exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
+        if one_scaling:
+            exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
+        else:
+            exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
+
+        num_dof = numpyro.sample('num_dof', dist.Chi2(4.0)) # FIXME? not sure what number of DOF for prior is best...
+
+        return mean0, stdv0, exp_mean, exp_stdv, num_dof
+
+    def model(one_scaling):
+        mean0, stdv0, exp_mean, exp_stdv, num_dof = prior(one_scaling)
+
+        mean = mean0 * data['M']**exp_mean
+        stdv = stdv0 * data['M']**exp_stdv
+
+        x = (data['dphi'] - mean)/stdv # convert to t-score
+
+        numpyro.sample('dphi', dist.StudentT(num_dof), obs=x)
+
+#---
+
+elif args.mode == 'noncentral_student_t':
+    def prior(one_scaling):
+        # draw hyperparameters
+        mean0 = numpyro.sample('mean0', dist.Normal(0.0, 5.0))
+        stdv0 = numpyro.sample('stdv0', dist.Uniform(0.001, 50.0))
+
+        exp_mean = numpyro.sample('exp_mean', dist.Normal(-2.0, 5.0))
+        if one_scaling:
+            exp_stdv = numpyro.deterministic('exp_stdv', exp_mean)
+        else:
+            exp_stdv = numpyro.sample('exp_stdv', dist.Normal(-2.0, 5.0))
+
+        num_dof = numpyro.sample('num_dof', dist.Chi2(4.0)) # FIXME? not sure what number of DOF for prior is best...
+        noncentral = numpyro.sample('noncentral', dist.Normal(0.0, 4.0)) # FIXME? also not sure about prior for this...
+
+        return mean0, stdv0, exp_mean, exp_stdv, num_dof, noncentral
+
+    def model(one_scaling):
+        mean0, stdv0, exp_mean, exp_stdv, num_dof, noncentral = prior(one_scaling)
+
+        raise NotImplementedError
+
+#---
+
+else:
+    raise ValueError('--mode=%s not understood' % args.mode)
 
 #------------------------    
 
@@ -141,50 +206,51 @@ with h5py.File(args.samples, 'w') as obj:
 if args.verbose:
     print('plotting')
 
-#          mean0       stdv0        exp_mean   exp_stdv
+keys = ['mean0', 'stdv0', 'exp_mean', 'exp_stdv']
 labels = ['$\mu_0$', '$\sigma_0$', '$p_\mu$', '$p_\sigma$']
 truth = [meta['mean0'], meta['stdv0'], meta['exp_mean'], meta['exp_stdv']]
 
+if args.mode == 'student_t':
+    keys.append('num_dof')
+    labels.append('num_dof')
+    truth.append(None)
+
+elif args.mode == 'noncentral_student_t':
+    keys += ['num_dof', 'noncentral']
+    labels += ['num_dof', 'noncentral']
+    truth += [None, None]
+
+#---
+
 ### prior
-atad = np.transpose([
-    prior_samples['mean0'],
-    prior_samples['stdv0'],
-    prior_samples['exp_mean'],
-    prior_samples['exp_stdv'],
-])
 
 fig = corner.corner(
-    atad,
+    np.transpose([prior_samples[key] for key in keys]),
     color='b',
     truths=truth,
     truth_color='k',
     hist_kwargs=dict(density=True),
-    bins=min(100, max(10, int(0.3*len(atad)**0.5))),
+    bins=min(100, max(10, int(0.3*num_prior_samples**0.5))),
 )
+
+#---
 
 ### posterior
 
-atad = np.transpose([
-    posterior_samples['mean0'],
-    posterior_samples['stdv0'],
-    posterior_samples['exp_mean'],
-    posterior_samples['exp_stdv'],
-])
-
 ranges = []
-for key in ['mean0', 'stdv0', 'exp_mean', 'exp_stdv']:
+for key in keys:
     m = min(np.min(posterior_samples[key]), meta[key])
     M = max(np.max(posterior_samples[key]), meta[key])
     d = (M-m)*0.1
     ranges.append((m-d, M+d))
 
 fig = corner.corner(
-    atad,
+    np.transpose([posterior_samples[key] for key in keys]),
     color='r',
     labels=labels,
     range=ranges,
     hist_kwargs=dict(histtype='stepfilled', alpha=0.50, density=True),
-    bins=min(100, max(10, int(0.3*len(atad)**0.5))),
+    bins=min(100, max(10, int(0.3*args.num_samples**0.5))),
     fig=fig,
 )
 
@@ -198,25 +264,6 @@ fig.suptitle('$\delta \phi \sim \mathcal{N}(\mu, \sigma)$\n$\mu = \mu_0  M^{p_\m
 
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')
-
-'''
-# compute and add sample moments
-scaled_stdv = meta['stdv0']*data['M']**meta['exp_stdv']
-scaled_mean = meta['mean0']*data['M']**meta['exp_mean']
-
-z = (data['dphi'] - scaled_mean) / scaled_stdv
-mean_z = np.mean(z)
-stdv_z = np.std(z)
-
-txt = 'sample_mean(z) = %.3f\nsample_stdv(z) = %.3f' % (mean_z, stdv_z)
-
-if stdv_z < 1:
-    txt += '\nexpect inferred $\sigma_0$ to be too big'
-else:
-    txt += '\nexpect inferred $\sigma_0$ to be too small'
-
-fig.text(0.5, 0.85, txt, ha='center', va='center')
-'''
 
 ### save
 
