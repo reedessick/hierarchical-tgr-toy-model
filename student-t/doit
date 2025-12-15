@@ -2,7 +2,7 @@
 
 NONCENTRAL=5
 
-for DPHI_MODE in scaled_normal # scaled_student_t scaled_noncentral_student_t
+for DPHI_MODE in scaled_normal scaled_student_t scaled_noncentral_student_t
 do
     for M_MODE in M # m1
     do
@@ -31,7 +31,6 @@ do
                     ${outdir}/catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
                     ${outdir}/samples_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}_${INF_MODE}.hdf \
                     --mode $INF_MODE \
-                    --fix num_dof 30 \
                     --num-warmup   500 \
                     --num-samples 5000 \
                     --seed 5678 \
@@ -42,7 +41,6 @@ do
                     ${outdir}/catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
                     ${outdir}/samples_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}_${INF_MODE}_one_scaling.hdf \
                     --mode $INF_MODE \
-                    --fix num_dof 30 \
                     --one-scaling \
                     --num-warmup   500 \
                     --num-samples 5000 \

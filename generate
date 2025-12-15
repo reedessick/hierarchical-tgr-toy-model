@@ -126,16 +126,14 @@ if args.dphi_mode == 'scaled_normal':
 
 elif args.dphi_mode == 'scaled_student_t':
     x = t.rvs(meta['num_dof'], size=args.num)
-    scale = stdv/t.std(meta['num_dof'])
-    dphi = x*scale + mean
+    dphi = x*stdv + mean
     logprob_dphi = t.logpdf(x, meta['num_dof']) - np.log(scale)
 
 #---
 
 elif args.dphi_mode == 'scaled_noncentral_student_t':
     x = nct.rvs(meta['num_dof'], meta['noncentral'], size=args.num)
-    scale = stdv/nct.std(meta['num_dof'], meta['noncentral'])
-    dphi = (x - nct.mean(meta['num_dof'], meta['noncentral']))*scale + mean
+    dphi = x*scale + mean
     logprob_dphi = nct.logpdf(x, meta['num_dof'], meta['noncentral']) - np.log(scale)
 
 #---
