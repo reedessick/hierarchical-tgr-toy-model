@@ -14,25 +14,25 @@ do
 
             ./generate \
                 1000 \
-                catalog_${DPHI_MODE}-${M_MODE}_${NUM_DOF}_${NONCENTAL}.hdf \
+                catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
                 --dphi-mode ${DPHI_MODE} \
                 --num-dof $NUM_DOF \
-                --noncentral $NONCENTAL \
+                --noncentral $NONCENTRAL \
                 --m-mode ${M_MODE} \
                 --seed 1234 \
                 -v
 
             ./infer \
-                catalog_${DPHI_MODE}-${M_MODE}_${NUM_DOF}_${NONCENTAL}.hdf \
-                samples_${DPHI_MODE}-${M_MODE}_${NUM_DOF}_${NONCENTAL}.hdf \
+                catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
+                samples_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
                 --num-warmup   5000 \
                 --num-samples 50000 \
                 --seed 5678 \
                 -v
 
             ./infer \
-                catalog_${DPHI_MODE}-${M_MODE}_${NUM_DOF}_${NONCENTAL}.hdf \
-                samples_${DPHI_MODE}-${M_MODE}_${NUM_DOF}_${NONCENTAL}_one_scaling.hdf \
+                catalog_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}.hdf \
+                samples_${DPHI_MODE}-${M_MODE}_dof-${NUM_DOF}_nc-${NONCENTRAL}_one_scaling.hdf \
                 --one-scaling \
                 --num-warmup   5000 \
                 --num-samples 50000 \
