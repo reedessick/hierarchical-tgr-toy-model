@@ -126,9 +126,9 @@ elif args.dphi_mode == 'scaled_student_t':
     logprob_dphi = t.logpdf(x, meta['num_dof'])
 
 elif args.dphi_mode == 'scaled_noncentral_student_t':
-    x = nct.rvs(meta['num_dof'], meta['noncentral'], size=args.size)
+    x = nct.rvs(meta['num_dof'], meta['noncentral'], size=args.num)
     dphi = (x - nct.mean(meta['num_dof'], meta['noncentral']))*(stdv/nct.std(meta['num_dof'], meta['noncentral'])) + mean
-    logprob_dphi = nct.logprob(x, meta['num_dof'], meta['noncentral'])
+    logprob_dphi = nct.logpdf(x, meta['num_dof'], meta['noncentral'])
 
 elif args.dphi_mode == 'scaled_exp_abs':
     gamma = 2**0.5/stdv
@@ -218,7 +218,13 @@ fig = corner.corner(
     labels=['$M$', '$q$', '$\delta\phi$'],
 )
 
-fig.suptitle('dphi_mode=%s\n%d events' % (args.dphi_mode, args.num))
+title = 'dphi_mode=%s\n%d events' % (args.dphi_mode, args.num)
+if 'student_t' in args.dphi_mode:
+    title += '\nnum_dof = %.3f' % args.num_dof
+if 'noncentral' in args.dphi_mode:
+    title += '\nnoncentral = %.3f' % args.noncentral
+
+fig.suptitle(title)
 
 for ax in fig.axes:
     ax.tick_params(direction='in', which='both')
