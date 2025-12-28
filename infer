@@ -99,6 +99,8 @@ if args.mode == 'normal':
         stdv = stdv0 * data['M']**exp_stdv
 
         numpyro.sample('dphi', dist.Normal(mean, stdv), obs=data['dphi'])
+
+        # this does not work for some reason...
 #        z = (data['dphi'] - mean) / stdv # convert to z-score
 #        numpyro.sample('dphi', dist.Normal(0, 1), obs=z)
 
@@ -130,6 +132,8 @@ elif args.mode == 'student_t':
         stdv = stdv0 * data['M']**exp_stdv
 
         numpyro.sample('dphi', dist.StudentT(num_dof, mean, stdv), obs=data['dphi'])
+
+        # this does not work for some reason...
 #        t = (data['dphi'] - mean)/(stdv/(num_dof/(num_dof-2))**0.5) # convert to t-score
 #        numpyro.sample('dphi', dist.StudentT(num_dof), obs=t)
 
@@ -165,7 +169,15 @@ elif args.mode == 'noncentral_student_t':
         mean = mean0 * data['M']**exp_mean
         stdv = stdv0 * data['M']**exp_stdv
 
-        raise NotImplementedError('''need to figure out how to compare to noncentral student-t variable''')
+        raise NotImplementedError('''
+need to figure out how to compare to noncentral student-t variable
+
+nct = (Z+noncentral)/(V/num_dof)**0.5
+
+where
+    Z ~ Normal(0, 1)
+    V ~ Chi2(num_dof)
+''')
 
 #---
 
